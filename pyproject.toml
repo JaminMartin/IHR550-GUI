@@ -5,7 +5,10 @@ description = "Add your description here"
 authors = [
     { name = "Jamin Martin", email = "jamin.martin1@gmail.com" }
 ]
-dependencies = []
+dependencies = [
+    "spcs-instruments>=0.7.1",
+    "ttkbootstrap>=1.10.1",
+]
 readme = "README.md"
 requires-python = ">= 3.8"
 
