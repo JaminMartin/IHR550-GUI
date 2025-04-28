@@ -1,0 +1,18 @@
+[device.iHR550]
+grating = "VIS"
+step_size = 0.1
+initial_wavelength = 500
+final_wavelength = 600
+
+[device.iHR550.slits]
+Entrance_Front = 0.0
+Entrance_Side = 0.0
+Exit_Front = 0.0
+Exit_Side = 0.0
+
+[device.iHR550.mirrors]
+Entrance = "front"
+Exit = "side"
+
+
+
