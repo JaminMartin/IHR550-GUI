@@ -13,6 +13,3 @@ Exit_Side = 0.0
 [device.iHR550.mirrors]
 Entrance = "front"
 Exit = "side"
-
-
-

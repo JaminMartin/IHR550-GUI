@@ -16,6 +16,9 @@ requires-python = ">= 3.8"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[project.gui-scripts]
+"counter_gui" = "ihr550_spectrometer_gui.gui:run_app"
+
 [tool.rye]
 managed = true
 dev-dependencies = []
