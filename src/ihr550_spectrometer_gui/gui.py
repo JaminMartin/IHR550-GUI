@@ -1,7 +1,9 @@
 '''Michael Moull - Designed gui for the ihr550 spectrometer.'''
-
-
-
+from os import environ
+from pathlib import Path
+from sys import base_prefix
+environ["TCL_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tcl8.6")
+environ["TK_LIBRARY"] = str(Path(base_prefix) / "tcl" / "tk8.6")
 
 import tkinter as tk
 ''
@@ -11,7 +13,7 @@ from ttkbootstrap.constants import *
 import time
 import threading
 from spcs_instruments import HoribaiHR550 as ihr
-from spcs_instruments.spcs_instruments_utils import load_config
+from rex_utils import load_config
 import toml
 from pathlib import Path
 
@@ -30,9 +32,10 @@ exit_slit_width=None
 grating=None
 
 
-'''Config for spectrometer initialization'''
-config = { "device": {"iHR550": {
+'''Config for visible spectrometer initialization'''
+config_VIS_i = { "device": {"iHR550": {
     "grating" : "VIS",
+    "bypass_homing": True,
     "step_size" : 0.1,
     "initial_wavelength" : 500,
     "final_wavelength" : 600,  
@@ -43,8 +46,82 @@ config = { "device": {"iHR550": {
     }
     }}} 
 
-with open(Path(__file__).parent / "config.toml", "w") as f:
-                toml.dump(config, f)
+'''Config for NIR spectrometer initialization'''
+config_NIR_i = { "device": {"iHR550": {
+    "grating" : "NIR",
+    "bypass_homing": True,
+    "step_size" : 0.1,
+    "initial_wavelength" : 1000,
+    "final_wavelength" : 1000,  
+    "slits" : { "Entrance_Front" : 0.0, "Entrance_Side" : 0.0, "Exit_Front" : 0.0, "Exit_Side" : 0.0},
+    "mirrors" : {
+        "Entrance" : "front",
+        "Exit" : "front",
+    }
+    }}} 
+
+
+
+'''Config for MIR spectrometer initialization'''
+config_MIR_i = { "device": {"iHR550": {
+    "grating" : "MIR", 
+    "bypass_homing": True,
+    "step_size" : 0.1,
+    "initial_wavelength" : 1800,
+    "final_wavelength" : 1900,  
+    "slits" : { "Entrance_Front" : 0.0, "Entrance_Side" : 0.0, "Exit_Front" : 0.0, "Exit_Side" : 0.0},
+    "mirrors" : {
+        "Entrance" : "front",
+        "Exit" : "side",
+    }
+    }}} 
+
+
+'''Config for visible spectrometer forced initialization'''
+config_VIS_fi = { "device": {"iHR550": {
+    "grating" : "VIS",
+    "bypass_homing": False,
+    "step_size" : 0.1,
+    "initial_wavelength" : 500,
+    "final_wavelength" : 600,  
+    "slits" : { "Entrance_Front" : 0.0, "Entrance_Side" : 0.0, "Exit_Front" : 0.0, "Exit_Side" : 0.0},
+    "mirrors" : {
+        "Entrance" : "front",
+        "Exit" : "side",
+    }
+    }}} 
+
+'''Config for NIR spectrometer forced initialization'''
+config_NIR_fi = { "device": {"iHR550": {
+    "grating" : "NIR",
+    "bypass_homing": False,
+    "step_size" : 0.1,
+    "initial_wavelength" : 1000,
+    "final_wavelength" : 1000,  
+    "slits" : { "Entrance_Front" : 0.0, "Entrance_Side" : 0.0, "Exit_Front" : 0.0, "Exit_Side" : 0.0},
+    "mirrors" : {
+        "Entrance" : "front",
+        "Exit" : "front",
+    }
+    }}} 
+
+
+
+'''Config for MIR spectrometer forced initialization'''
+config_MIR_fi = { "device": {"iHR550": {
+    "grating" : "MIR", 
+    "bypass_homing": False,
+    "step_size" : 0.1,
+    "initial_wavelength" : 1800,
+    "final_wavelength" : 1900,  
+    "slits" : { "Entrance_Front" : 0.0, "Entrance_Side" : 0.0, "Exit_Front" : 0.0, "Exit_Side" : 0.0},
+    "mirrors" : {
+        "Entrance" : "front",
+        "Exit" : "side",
+    }
+    }}} 
+
+
 
 style = tb.Style()
 theme_path = Path(__file__).parent / "theme.json"
@@ -72,7 +149,16 @@ pane6.grid(row=3, column=1, padx=10, pady=5)
 def initialize_spec_thread():
     global spec
     global spec_is_busy
-    spec = ihr(config=Path(__file__).parent / "config.toml", connect_to_pyfex=False, bypass_homing= True)
+
+    
+    current_turret = grating_select.get()
+
+    config_filename = "config_"+current_turret+"_i"
+
+    with open(Path(__file__).parent / "config.toml", "w") as f:
+                toml.dump(config_filename, f)
+
+    spec = ihr(config=Path(__file__).parent / "config.toml", connect_to_rex=False)
     #time.sleep(10)
     spec_is_busy = False
     status_label.config(text='Spec Ready',background='green')
@@ -89,7 +175,6 @@ def initialize_spec():
         print('Initializing spectrometer')
         status_label.config(text='Spec Initializing',background='red')
         threading.Thread(target=initialize_spec_thread).start()
-        grating_select.current(0)
         if entrance_slit_front_check.get() == 0:
             entrance_slit_front_check.set(1)
         else:
@@ -111,15 +196,22 @@ def initialize_spec():
         entrance_slit_width_select.current(0)
 
 
-        #spec = ihr(config=Path(__file__).parent / "config.toml", connect_to_pyfex=False, bypass_homing= True)
-        #time.sleep(10)
-        #spec_is_busy = False
 
 
 def force_initialize_spec_thread():
     global spec
     global spec_is_busy
-    spec = ihr(config=Path(__file__).parent / "config.toml", connect_to_pyfex=False, bypass_homing= False)
+
+    
+    current_turret = grating_select.get()
+
+    config_filename = "config_"+current_turret+"_fi"
+
+
+    with open(Path(__file__).parent / "config.toml", "w") as f:
+                toml.dump(config_filename, f)
+
+    spec = ihr(config=Path(__file__).parent / "config.toml", connect_to_rex=False)
     #time.sleep(10)
     spec_is_busy = False
     status_label.config(text='Spec Ready',background='green')
@@ -136,7 +228,6 @@ def force_initialize_spec():
         status_label.config(text='Spec Initializing',background='red')
         print('Initializing spectrometer')
         threading.Thread(target=force_initialize_spec_thread).start()     
-        grating_select.current(0)
         if entrance_slit_front_check.get() == 0:
             entrance_slit_front_check.set(1)
         else:
